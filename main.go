@@ -29,6 +29,7 @@ func main() {
 	log.Println("Connected to Database: ", db.Name())
 
 	router := gin.Default()
-	router.POST("/register", service.Registeruser)
+	router.POST("/register", service.RegisterUser)
+	router.POST("/login", service.LoginUser)
 	router.Run("localhost:6969")
 }
