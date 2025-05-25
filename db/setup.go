@@ -31,6 +31,10 @@ func InitTables() error {
 		if err != nil {
 			return errors.New("failed to init table: user")
 		}
+		err = DB.AutoMigrate(&model.ToDo{})
+		if err != nil {
+			return errors.New("failed to init table: todo")
+		}
 	}
 	return nil
 }

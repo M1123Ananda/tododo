@@ -31,5 +31,6 @@ func main() {
 	router := gin.Default()
 	router.POST("/register", service.RegisterUser)
 	router.POST("/login", service.LoginUser)
+	router.POST("/todos", service.CreateToDoItem)
 	router.Run("localhost:6969")
 }

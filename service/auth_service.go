@@ -29,10 +29,16 @@ func RegisterUser(ctx *gin.Context) {
 		return
 	}
 
+	passwordHash, err := utils.HashPassword(req.Password)
+	if err != nil {
+		log.Panicf("Failed to Hash Password: %v", err)
+		ctx.IndentedJSON(http.StatusInternalServerError, model.AuthError{Error: "Internal Error"})
+	}
+
 	tx := DB.Create(&model.User{
 		Name:     req.Name,
 		Email:    req.Email,
-		Password: req.Password,
+		Password: passwordHash,
 	})
 	if tx.Error != nil {
 		log.Panic("User could not be inserted into DB")
@@ -69,7 +75,7 @@ func LoginUser(ctx *gin.Context) {
 
 	var user model.User
 
-	tx := DB.Where(model.User{Email: req.Email, Password: req.Password}).First(&user)
+	tx := DB.Where(model.User{Email: req.Email}).First(&user)
 	if tx.Error != nil {
 		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
 			ctx.IndentedJSON(http.StatusUnauthorized, model.AuthError{Error: "Incorrect Credentials"})
@@ -81,12 +87,19 @@ func LoginUser(ctx *gin.Context) {
 		}
 	}
 
-	token, err := utils.GenerateToken(req.Email)
-	if err != nil {
-		log.Panicf("Failed to generate token: %v", err)
-		ctx.IndentedJSON(http.StatusInternalServerError, model.AuthError{Error: "Internal Error"})
+	correctPassword := utils.VerifyPassword(req.Password, user.Password)
+
+	if correctPassword {
+		token, err := utils.GenerateToken(req.Email)
+		if err != nil {
+			log.Panicf("Failed to generate token: %v", err)
+			ctx.IndentedJSON(http.StatusInternalServerError, model.AuthError{Error: "Internal Error"})
+			return
+		}
+		ctx.IndentedJSON(http.StatusOK, model.AuthenticateResponse{Token: token})
+		return
+	} else {
+		ctx.IndentedJSON(http.StatusUnauthorized, model.AuthError{Error: "Incorrect Credentials"})
 		return
 	}
-
-	ctx.IndentedJSON(http.StatusOK, model.AuthenticateResponse{Token: token})
 }
