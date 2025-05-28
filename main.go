@@ -33,6 +33,8 @@ func main() {
 	router.POST("/login", service.LoginUser)
 	router.POST("/todos", service.CreateToDoItem)
 	router.PUT("/:id", service.UpdateToDoItem)
-	
+	router.DELETE("/:id", service.DeleteToDoItem)
+	router.GET("/", service.GetToDoItems)
+
 	router.Run("localhost:6969")
 }
