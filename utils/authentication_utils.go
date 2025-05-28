@@ -3,6 +3,7 @@ package utils
 import (
 	"errors"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -11,7 +12,6 @@ import (
 
 type UserClaims struct {
 	Email string
-	Exp   int64
 	jwt.RegisteredClaims
 }
 
@@ -19,7 +19,9 @@ func GenerateToken(email string) (token string, err error) {
 	claims := jwt.NewWithClaims(jwt.SigningMethodHS256,
 		UserClaims{
 			Email: email,
-			Exp:   time.Now().Add(time.Hour * 24).Unix(),
+			RegisteredClaims: jwt.RegisteredClaims{
+				ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24)),
+			},
 		})
 
 	key := os.Getenv("JWT_SECRET")
@@ -57,4 +59,14 @@ func HashPassword(password string) (string, error) {
 func VerifyPassword(password, hash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	return err == nil
+}
+
+func GetTokenFromBearer(bearerToken string) (token string, err error){
+
+	parts := strings.Split(bearerToken, " ")
+	if len(parts) != 2 || parts[0] != "Bearer" {
+		return "", errors.New("invalid error")
+	}
+
+	return parts[1], nil
 }
